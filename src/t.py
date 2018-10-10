@@ -1,8 +1,22 @@
+import os
 from sklearn import cluster
 import numpy as np
 import matplotlib.pyplot as plot
 
-FILE_PATH = "../data/sample01/001.txt"
+FILE_PATH = "../data/sample01/"
+
+def read_data():
+    data = []
+
+    for root, dirs, file_paths in os.walk(FILE_PATH):
+        file_paths.sort()
+        for file_path in file_paths:
+            file = open(FILE_PATH + file_path)
+            lines = file.readlines()
+            for index in range(1, len(lines)):
+                data.append(int(lines[index].replace("\n", "")))
+    data = [(index, data[index]) for index in range(len(data))]
+    return data
 
 # 找出所有轉折點
 def find_peaks(data):
@@ -43,6 +57,14 @@ def find_slicing_peak_indexes(cluster_labels, wave_crest_label):
         if cluster_labels[index - 1] == wave_crest_label and cluster_labels[index] != wave_crest_label:
             slicing_peak_indexes.append(index)
     return slicing_peak_indexes
+
+def find_wave_trough_indexes(cluster_labels, wave_crest_label):
+    wave_trough_indexes = []
+
+    for index in range(1, len(cluster_labels)):
+        if cluster_labels[index - 1] != wave_crest_label and cluster_labels[index] == wave_crest_label:
+            wave_trough_indexes.append(index - 1)
+    return wave_trough_indexes
 
 # 找出切割波長的轉折點
 def find_slicing_peaks(peaks, slicing_peak_indexes):
@@ -104,12 +126,7 @@ def plot_freq_domain_phase(phases):
     plot.legend(loc = "upper right")
 
 if __name__ == "__main__":
-    file = open(FILE_PATH)
-    lines = file.readlines()
-
-    data = []
-    for index in range(1, len(lines)):
-        data.append((index - 1, int(lines[index].replace("\n", ""))))
+    data = read_data()
     # print(data)
 
     peaks = find_peaks(data)
@@ -125,7 +142,7 @@ if __name__ == "__main__":
     wave_crest_label = find_largest_cluster_label(cluster_centers)
     print("wave crest cluster:", wave_crest_label)
 
-    slicing_peak_indexes = find_slicing_peak_indexes(cluster_labels, wave_crest_label)
+    slicing_peak_indexes = find_wave_trough_indexes(cluster_labels, wave_crest_label)
     # print(slicing_peak_indexes)
 
     slicing_peaks = find_slicing_peaks(peaks, slicing_peak_indexes)
@@ -133,6 +150,7 @@ if __name__ == "__main__":
     print(slicing_peaks)
 
     waves = slice_data(data, slicing_peaks)
+    waves = waves[1:]
 
     double_waves = []
     bias = 1
