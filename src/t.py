@@ -137,6 +137,25 @@ def plot_freq_domain_phase(phases):
     plot.plot(phases[3], label = "wave 4", color = "cornflowerblue")
     plot.legend(loc = "upper right")
 
+def analyze_mean_stdev(waves):
+    amplitudes = []
+    for wave in waves:
+        amplitudes.append(compute_fft_amplitude([y for x, y in wave]))
+    for amplitude in amplitudes:
+        amplitude.sort()
+
+    base_freq_mean = np.mean([amplitude[-1] for amplitude in amplitudes])
+    double_freq_mean = np.mean([amplitude[-2] for amplitude in amplitudes])
+    triple_freq_mean = np.mean([amplitude[-3] for amplitude in amplitudes])
+
+    base_freq_stdev = np.std([amplitude[-1] for amplitude in amplitudes])
+    double_freq_stdev = np.std([amplitude[-2] for amplitude in amplitudes])
+    triple_freq_stdev = np.std([amplitude[-3] for amplitude in amplitudes])
+
+    means = [base_freq_mean, double_freq_mean, triple_freq_mean]
+    stdevs = [base_freq_stdev, double_freq_stdev, triple_freq_stdev]
+    return means, stdevs
+
 if __name__ == "__main__":
     data = read_data()
     # print(data)
@@ -172,4 +191,9 @@ if __name__ == "__main__":
     analyze("One wave", waves[1:5])
     # 切兩個兩個波
     analyze("Two waves", double_waves[1:5])
+
+    means, stdevs = analyze_mean_stdev(double_waves)
+    print("means:", means[0], means[1], means[2])
+    print("stdevs:", stdevs[0], stdevs[1], stdevs[2])
+
     plot.show()
