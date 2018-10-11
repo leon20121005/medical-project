@@ -85,6 +85,18 @@ def slice_data(data, slicing_peaks):
         waves.append(data[slicing_peaks_x[index] + 1:slicing_peaks_x[index + 1]])
     return waves
 
+def analyze(title, waves):
+    amplitudes = []
+    phases = []
+    for wave in waves:
+        amplitudes.append(compute_fft_amplitude([y for x, y in wave]))
+        phases.append(compute_fft_phase([y for x, y in wave]))
+    plot.figure(title)
+
+    plot_time_domain_amplitude(data, peaks, slicing_peaks)
+    plot_freq_domain_amplitude(amplitudes)
+    plot_freq_domain_phase(phases)
+
 def compute_fft_amplitude(data):
     frequency_data = np.fft.fft(data) / len(data)
     return np.abs(frequency_data[1:20])
@@ -158,26 +170,8 @@ if __name__ == "__main__":
         double_waves.append(waves[index + bias] + waves[index + bias + 1])
 
     # 切一個一個波
-    amplitudes = []
-    phases = []
-    for wave in waves[:4]:
-        amplitudes.append(compute_fft_amplitude([y for x, y in wave]))
-        phases.append(compute_fft_phase([y for x, y in wave]))
-
-    plot.figure("One wave")
-    plot_time_domain_amplitude(data, peaks, slicing_peaks)
-    plot_freq_domain_amplitude(amplitudes)
-    plot_freq_domain_phase(phases)
-
+    analyze("One wave", waves[:4])
     # 切兩個兩個波
-    amplitudes = []
-    phases = []
-    for wave in double_waves:
-        amplitudes.append(compute_fft_amplitude([y for x, y in wave]))
-        phases.append(compute_fft_phase([y for x, y in wave]))
+    analyze("Two waves", double_waves)
 
-    plot.figure("Two waves")
-    plot_time_domain_amplitude(data, peaks, slicing_peaks)
-    plot_freq_domain_amplitude(amplitudes)
-    plot_freq_domain_phase(phases)
     plot.show()
