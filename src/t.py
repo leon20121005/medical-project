@@ -165,13 +165,11 @@ if __name__ == "__main__":
     waves = waves[1:]
 
     double_waves = []
-    bias = 1
-    for index in range(len(waves[:4])):
-        double_waves.append(waves[index + bias] + waves[index + bias + 1])
+    for index in range(len(waves) - 1):
+        double_waves.append(waves[index] + waves[index + 1])
 
     # 切一個一個波
-    analyze("One wave", waves[:4])
+    analyze("One wave", waves[1:5])
     # 切兩個兩個波
-    analyze("Two waves", double_waves)
-
+    analyze("Two waves", double_waves[1:5])
     plot.show()
