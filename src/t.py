@@ -3,20 +3,28 @@ from sklearn import cluster
 import numpy as np
 import matplotlib.pyplot as plot
 
-FILE_PATH = "../data/sample01/"
+FILE_PATH = "../data/"
 
-def read_data():
-    data = []
-
+def read_directories():
     for root, dirs, file_paths in os.walk(FILE_PATH):
-        file_paths.sort()
-        for file_path in file_paths:
-            file = open(FILE_PATH + file_path)
-            lines = file.readlines()
-            for index in range(1, len(lines)):
-                data.append(int(lines[index].replace("\n", "")))
-    data = [(index, data[index]) for index in range(len(data))]
-    return data
+        return [FILE_PATH + dir + "/" for dir in dirs]
+
+def read_samples(directories):
+    samples = []
+
+    for directory in directories:
+        data = []
+
+        for root, dirs, file_paths in os.walk(directory):
+            file_paths.sort()
+            for file_path in file_paths:
+                file = open(directory + file_path)
+                lines = file.readlines()
+                for index in range(1, len(lines)):
+                    data.append(int(lines[index].replace("\n", "")))
+        data = [(index, data[index]) for index in range(len(data))]
+        samples.append(data)
+    return samples
 
 # 找出所有轉折點
 def find_peaks(data):
@@ -157,43 +165,46 @@ def analyze_mean_stdev(waves):
     return means, stdevs
 
 if __name__ == "__main__":
-    data = read_data()
-    # print(data)
+    directories = read_directories()
+    samples = read_samples(directories)
 
-    peaks = find_peaks(data)
-    # print(peaks)
+    for data in samples:
+        peaks = find_peaks(data)
+        # print(peaks)
 
-    kmeans = cluster.KMeans(n_clusters = 3).fit([(0, peak[1]) for peak in peaks])
-    cluster_labels = kmeans.labels_
-    cluster_centers = kmeans.cluster_centers_
-    print("cluster labels:")
-    print(cluster_labels)
-    # print(cluster_centers)
+        kmeans = cluster.KMeans(n_clusters = 3).fit([(0, peak[1]) for peak in peaks])
+        cluster_labels = kmeans.labels_
+        cluster_centers = kmeans.cluster_centers_
+        # print("cluster labels:")
+        # print(cluster_labels)
+        # print(cluster_centers)
 
-    wave_crest_label = find_largest_cluster_label(cluster_centers)
-    print("wave crest cluster:", wave_crest_label)
+        wave_crest_label = find_largest_cluster_label(cluster_centers)
+        # print("wave crest cluster:", wave_crest_label)
 
-    slicing_peak_indexes = find_wave_trough_indexes(cluster_labels, wave_crest_label)
-    # print(slicing_peak_indexes)
+        slicing_peak_indexes = find_wave_trough_indexes(cluster_labels, wave_crest_label)
+        # print(slicing_peak_indexes)
 
-    slicing_peaks = find_slicing_peaks(peaks, slicing_peak_indexes)
-    print("slicing peaks:")
-    print(slicing_peaks)
+        slicing_peaks = find_slicing_peaks(peaks, slicing_peak_indexes)
+        # print("slicing peaks:")
+        # print(slicing_peaks)
 
-    waves = slice_data(data, slicing_peaks)
-    waves = waves[1:]
+        waves = slice_data(data, slicing_peaks)
+        waves = waves[1:]
 
-    double_waves = []
-    for index in range(len(waves) - 1):
-        double_waves.append(waves[index] + waves[index + 1])
+        double_waves = []
+        for index in range(len(waves) - 1):
+            double_waves.append(waves[index] + waves[index + 1])
 
-    # 切一個一個波
-    analyze("One wave", waves[1:5])
-    # 切兩個兩個波
-    analyze("Two waves", double_waves[1:5])
+        # # 切一個一個波
+        # analyze("One wave", waves[1:5])
+        # # 切兩個兩個波
+        # analyze("Two waves", double_waves[1:5])
 
-    means, stdevs = analyze_mean_stdev(double_waves)
-    print("means:", means[0], means[1], means[2])
-    print("stdevs:", stdevs[0], stdevs[1], stdevs[2])
+        print(directories[samples.index(data)].split("/")[2])
+        means, stdevs = analyze_mean_stdev(double_waves)
+        print("means:", means[0], means[1], means[2])
+        print("stdevs:", stdevs[0], stdevs[1], stdevs[2])
+        print()
 
-    plot.show()
+        # plot.show()
