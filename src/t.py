@@ -152,16 +152,11 @@ def analyze_mean_stdev(waves):
     for amplitude in amplitudes:
         amplitude.sort()
 
-    base_freq_mean = np.mean([amplitude[-1] for amplitude in amplitudes])
-    double_freq_mean = np.mean([amplitude[-2] for amplitude in amplitudes])
-    triple_freq_mean = np.mean([amplitude[-3] for amplitude in amplitudes])
-
-    base_freq_stdev = np.std([amplitude[-1] for amplitude in amplitudes])
-    double_freq_stdev = np.std([amplitude[-2] for amplitude in amplitudes])
-    triple_freq_stdev = np.std([amplitude[-3] for amplitude in amplitudes])
-
-    means = [base_freq_mean, double_freq_mean, triple_freq_mean]
-    stdevs = [base_freq_stdev, double_freq_stdev, triple_freq_stdev]
+    means = []
+    stdevs = []
+    for index in reversed(range(len(amplitudes[0]))):
+        means.append(np.mean([amplitude[index] for amplitude in amplitudes]))
+        stdevs.append(np.std([amplitude[index] for amplitude in amplitudes]))
     return means, stdevs
 
 if __name__ == "__main__":
@@ -202,9 +197,11 @@ if __name__ == "__main__":
         # analyze("Two waves", double_waves[1:5])
 
         print(directories[samples.index(data)].split("/")[2])
-        means, stdevs = analyze_mean_stdev(double_waves)
-        print("means:", means[0], means[1], means[2])
-        print("stdevs:", stdevs[0], stdevs[1], stdevs[2])
+        means, stdevs = analyze_mean_stdev(waves)
+        coefvars = [stdev / mean for mean, stdev in zip(means, stdevs)]
+        print("means:", means)
+        print("stdevs:",stdevs)
+        print("coefvars:", coefvars)
         print()
 
         # plot.show()
