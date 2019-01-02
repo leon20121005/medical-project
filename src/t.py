@@ -93,31 +93,17 @@ def analyze_mean_stdev(waves):
     return means, stdevs
 
 def write_file(file, dataset_name, double_waves_base, quadra_waves_base, octa_waves_base):
+    data = [double_waves_base, quadra_waves_base, octa_waves_base]
     file.write(dataset_name + "\n")
-    file.write("mean," + str(double_waves_mean) + "\n")
-    file.write("stdev," + str(double_waves_stdev) + "\n")
-    file.write("coefvar," + str(double_waves_coefvar) + "\n")
-    line = ""
-    for each in double_waves_base:
-        line += str(each) + ","
-    line = line[:-1] + "\n"
-    file.write(line)
-    file.write("mean," + str(quadra_waves_mean) + "\n")
-    file.write("stdev," + str(quadra_waves_stdev) + "\n")
-    file.write("coefvar," + str(quadra_waves_coefvar) + "\n")
-    line = ""
-    for each in quadra_waves_base:
-        line += str(each) + ","
-    line = line[:-1] + "\n"
-    file.write(line)
-    file.write("mean," + str(octa_waves_mean) + "\n")
-    file.write("stdev," + str(octa_waves_stdev) + "\n")
-    file.write("coefvar," + str(octa_waves_coefvar) + "\n")
-    line = ""
-    for each in octa_waves_base:
-        line += str(each) + ","
-    line = line[:-1] + "\n"
-    file.write(line)
+    for each in data:
+        file.write("mean," + str(each["mean"]) + "\n")
+        file.write("stdev," + str(each["stdev"]) + "\n")
+        file.write("coefvar," + str(each["coefvar"]) + "\n")
+        line = ""
+        for amplitude in each["amplitudes"]:
+            line += str(amplitude) + ","
+        line = line[:-1] + "\n"
+        file.write(line)
 
 if __name__ == "__main__":
     directories = read_directories()
@@ -139,43 +125,40 @@ if __name__ == "__main__":
         double_waves = []
         for index in range(len(waves) - 1):
             double_waves.append(waves[index] + waves[index + 1])
-        double_waves_base = []
+        double_waves_base = {"amplitudes": [], "mean": None, "stdev": None, "coefvar": None}
         for wave in double_waves:
             amplitudes = compute_fft_amplitude([y for x, y in wave])
             amplitudes.sort()
-            double_waves_base.append(amplitudes[-1])
+            double_waves_base["amplitudes"].append(amplitudes[-1])
+        double_waves_base["mean"] = np.mean(double_waves_base["amplitudes"])
+        double_waves_base["stdev"] = np.std(double_waves_base["amplitudes"])
+        double_waves_base["coefvar"] = double_waves_base["stdev"] / double_waves_base["mean"]
 
         # 四個波
         quadra_waves = []
         for index in range(len(waves) - 3):
             quadra_waves.append(waves[index] + waves[index + 1] + waves[index + 2] + waves[index + 3])
-        quadra_waves_base = []
+        quadra_waves_base = {"amplitudes": [], "mean": None, "stdev": None, "coefvar": None}
         for wave in quadra_waves:
             amplitudes = compute_fft_amplitude([y for x, y in wave])
             amplitudes.sort()
-            quadra_waves_base.append(amplitudes[-1])
+            quadra_waves_base["amplitudes"].append(amplitudes[-1])
+        quadra_waves_base["mean"] = np.mean(quadra_waves_base["amplitudes"])
+        quadra_waves_base["stdev"] = np.std(quadra_waves_base["amplitudes"])
+        quadra_waves_base["coefvar"] = quadra_waves_base["stdev"] / quadra_waves_base["mean"]
 
         # 八個波
         octa_waves = []
         for index in range(len(waves) - 7):
             octa_waves.append(waves[index] + waves[index + 1] + waves[index + 2] + waves[index + 3] + waves[index + 4] + waves[index + 5] + waves[index + 6] + waves[index + 7])
-        octa_waves_base = []
+        octa_waves_base = {"amplitudes": [], "mean": None, "stdev": None, "coefvar": None}
         for wave in octa_waves:
             amplitudes = compute_fft_amplitude([y for x, y in wave])
             amplitudes.sort()
-            octa_waves_base.append(amplitudes[-1])
-
-        double_waves_mean = np.mean(double_waves_base)
-        quadra_waves_mean = np.mean(quadra_waves_base)
-        octa_waves_mean = np.mean(octa_waves_base)
-
-        double_waves_stdev = np.std(double_waves_base)
-        quadra_waves_stdev = np.std(quadra_waves_base)
-        octa_waves_stdev = np.std(octa_waves_base)
-
-        double_waves_coefvar = double_waves_stdev / double_waves_mean
-        quadra_waves_coefvar = quadra_waves_stdev / quadra_waves_mean
-        octa_waves_coefvar = octa_waves_stdev / octa_waves_mean
+            octa_waves_base["amplitudes"].append(amplitudes[-1])
+        octa_waves_base["mean"] = np.mean(octa_waves_base["amplitudes"])
+        octa_waves_base["stdev"] = np.std(octa_waves_base["amplitudes"])
+        octa_waves_base["coefvar"] = octa_waves_base["stdev"] / octa_waves_base["mean"]
 
         # # 切一個一個波
         # analyze("One wave", waves[1:5])
