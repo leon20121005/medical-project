@@ -92,11 +92,28 @@ def analyze_mean_stdev(waves):
         stdevs.append(np.std([amplitude[index] for amplitude in amplitudes]))
     return means, stdevs
 
+def write_file(file, dataset_name, double_waves_base, quadra_waves_base):
+    file.write(dataset_name + "\n")
+    line = ""
+    for each in double_waves_base:
+        line += str(each) + ","
+    line = line[:-1] + "\n"
+    file.write(line)
+    line = ""
+    for each in quadra_waves_base:
+        line += str(each) + ","
+    line = line[:-1] + "\n"
+    file.write(line)
+
 if __name__ == "__main__":
     directories = read_directories()
     samples = read_samples(directories)
 
+    file = open("../result.csv", "w", encoding = "utf_8_sig")
+
     for data in samples:
+        dataset_name = directories[samples.index(data)].split("/")[2]
+
         # data: [(index, amplitude), ...]
         slicer = WaveSlicer()
         slicer.fit(data)
@@ -104,21 +121,44 @@ if __name__ == "__main__":
         waves = slicer.get_waves()
         waves = waves[1:]
 
+        # 兩個波
         double_waves = []
         for index in range(len(waves) - 1):
             double_waves.append(waves[index] + waves[index + 1])
+
+        double_waves_base = []
+        for wave in double_waves:
+            amplitudes = compute_fft_amplitude([y for x, y in wave])
+            amplitudes.sort()
+            double_waves_base.append(amplitudes[-1])
+
+        # 四個波
+        quadra_waves = []
+        for index in range(len(waves) - 3):
+            quadra_waves.append(waves[index] + waves[index + 1] + waves[index + 2] + waves[index + 3])
+
+        quadra_waves_base = []
+        for wave in quadra_waves:
+            amplitudes = compute_fft_amplitude([y for x, y in wave])
+            amplitudes.sort()
+            quadra_waves_base.append(amplitudes[-1])
 
         # # 切一個一個波
         # analyze("One wave", waves[1:5])
         # # 切兩個兩個波
         # analyze("Two waves", double_waves[1:5])
 
-        print(directories[samples.index(data)].split("/")[2])
-        means, stdevs = analyze_mean_stdev(waves)
-        coefvars = [stdev / mean for mean, stdev in zip(means, stdevs)]
-        print("means:", means)
-        print("stdevs:", stdevs)
-        print("coefvars:", coefvars)
-        print()
+        # print(dataset_name)
+        # means, stdevs = analyze_mean_stdev(waves)
+        # coefvars = [stdev / mean for mean, stdev in zip(means, stdevs)]
+        # print("means:", means)
+        # print("stdevs:", stdevs)
+        # print("coefvars:", coefvars)
+        # print()
+
+        print(dataset_name)
+        print(double_waves_base)
+        print(quadra_waves_base)
+        write_file(file, dataset_name, double_waves_base, quadra_waves_base)
 
         # plot.show()
