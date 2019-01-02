@@ -3,6 +3,8 @@ from sklearn import cluster
 import numpy as np
 import matplotlib.pyplot as plot
 
+from waveSlicer import WaveSlicer
+
 FILE_PATH = "../data/"
 
 def read_directories():
@@ -11,10 +13,8 @@ def read_directories():
 
 def read_samples(directories):
     samples = []
-
     for directory in directories:
         data = []
-
         for root, dirs, file_paths in os.walk(directory):
             file_paths.sort()
             for file_path in file_paths:
@@ -25,73 +25,6 @@ def read_samples(directories):
         data = [(index, data[index]) for index in range(len(data))]
         samples.append(data)
     return samples
-
-# 找出所有轉折點
-def find_peaks(data):
-    peaks = []
-    previous_slope = None
-
-    for index in range(1, len(data)):
-        difference = data[index][1] - data[index - 1][1]
-        if difference == 0:
-            continue
-        if difference > 0:
-            if previous_slope is "negative":
-                peaks.append(data[index - 1])
-            previous_slope = "positive"
-            continue
-        if difference < 0:
-            if previous_slope is "positive":
-                peaks.append(data[index - 1])
-            previous_slope = "negative"
-            continue
-    return peaks
-
-# 找出最大的cluster的label(波峰的label)
-def find_largest_cluster_label(cluster_centers):
-    largest_cluster, largest_center = (0, 0)
-
-    for index in range(len(cluster_centers)):
-        if cluster_centers[index][1] > largest_center:
-            largest_cluster = index
-            largest_center = cluster_centers[index][1]
-    return largest_cluster
-
-# 找出切割波的轉折點的index
-def find_slicing_peak_indexes(cluster_labels, wave_crest_label):
-    slicing_peak_indexes = []
-
-    for index in range(1, len(cluster_labels)):
-        if cluster_labels[index - 1] == wave_crest_label and cluster_labels[index] != wave_crest_label:
-            slicing_peak_indexes.append(index)
-    return slicing_peak_indexes
-
-def find_wave_trough_indexes(cluster_labels, wave_crest_label):
-    wave_trough_indexes = []
-
-    for index in range(1, len(cluster_labels)):
-        if cluster_labels[index - 1] != wave_crest_label and cluster_labels[index] == wave_crest_label:
-            wave_trough_indexes.append(index - 1)
-    return wave_trough_indexes
-
-# 找出切割波長的轉折點
-def find_slicing_peaks(peaks, slicing_peak_indexes):
-    slicing_peaks = []
-
-    for index in range(len(peaks)):
-        if index in slicing_peak_indexes:
-            slicing_peaks.append(peaks[index])
-    return slicing_peaks
-
-# 根據切割波長的轉折點來切割data
-def slice_data(data, slicing_peaks):
-    waves = []
-    slicing_peaks_x = [slicing_peak[0] for slicing_peak in slicing_peaks]
-    slicing_peaks_x = [-1] + slicing_peaks_x
-
-    for index in range(len(slicing_peaks_x) - 1):
-        waves.append(data[slicing_peaks_x[index] + 1:slicing_peaks_x[index + 1]])
-    return waves
 
 def analyze(title, waves):
     amplitudes = []
@@ -164,27 +97,11 @@ if __name__ == "__main__":
     samples = read_samples(directories)
 
     for data in samples:
-        peaks = find_peaks(data)
-        # print(peaks)
+        # data: [(index, amplitude), ...]
+        slicer = WaveSlicer()
+        slicer.fit(data)
 
-        kmeans = cluster.KMeans(n_clusters = 3).fit([(0, peak[1]) for peak in peaks])
-        cluster_labels = kmeans.labels_
-        cluster_centers = kmeans.cluster_centers_
-        # print("cluster labels:")
-        # print(cluster_labels)
-        # print(cluster_centers)
-
-        wave_crest_label = find_largest_cluster_label(cluster_centers)
-        # print("wave crest cluster:", wave_crest_label)
-
-        slicing_peak_indexes = find_wave_trough_indexes(cluster_labels, wave_crest_label)
-        # print(slicing_peak_indexes)
-
-        slicing_peaks = find_slicing_peaks(peaks, slicing_peak_indexes)
-        # print("slicing peaks:")
-        # print(slicing_peaks)
-
-        waves = slice_data(data, slicing_peaks)
+        waves = slicer.get_waves()
         waves = waves[1:]
 
         double_waves = []
@@ -200,7 +117,7 @@ if __name__ == "__main__":
         means, stdevs = analyze_mean_stdev(waves)
         coefvars = [stdev / mean for mean, stdev in zip(means, stdevs)]
         print("means:", means)
-        print("stdevs:",stdevs)
+        print("stdevs:", stdevs)
         print("coefvars:", coefvars)
         print()
 
